@@ -10,6 +10,9 @@ from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
 import re
 
+from traffic.models import AccidentRecord
+
+
 # @login_required
 def sync_database(request):
     if request.method != "POST":
@@ -37,3 +40,17 @@ def sync_database(request):
 
 def dashboard(request):
     return render(request, "traffic/dashboard.html")
+
+
+def chart_data(request):
+    records = AccidentRecord.objects.order_by("year", "month").values(
+        "year", "month", "accidents_total"
+    )
+    data = [
+        {
+            "label": f"{r['year']}-{r['month']:02d}",
+            "value": r["accidents_total"]
+        }
+        for r in records
+    ]
+    return JsonResponse({"data": data})

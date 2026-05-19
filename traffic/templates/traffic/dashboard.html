@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Wypadki drogowe a ceny paliw</h1>
+
     <button onclick="syncDatabase()">🔄 Sync with database</button>
     <p id="sync-status"></p>
+
+    <canvas id="accidentsChart"></canvas>
 
     <script>
     async function syncDatabase() {
@@ -19,7 +23,49 @@
         const data = await response.json();
         document.getElementById("sync-status").textContent =
             `Gotowe! Dodano: ${data.created}, pominięto: ${data.skipped}`;
+        loadChart();  // odśwież wykres po syncowaniu
     }
+
+    async function loadChart() {
+        const response = await fetch("/chart-data/");
+        const json = await response.json();
+
+        const labels = json.data.map(r => r.label);
+        const values = json.data.map(r => r.value);
+
+        const ctx = document.getElementById("accidentsChart").getContext("2d");
+
+        if (window.accidentsChart instanceof Chart) {
+            window.accidentsChart.destroy();  // zniszcz stary wykres przed odświeżeniem
+        }
+
+        window.accidentsChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Wypadki ogółem",
+                    data: values,
+                    borderColor: "rgb(255, 99, 132)",
+                    backgroundColor: "rgba(255, 99, 132, 0.1)",
+                    tension: 0.3,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: "top" },
+                },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 24 } },
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+
+    loadChart();
     </script>
 </body>
 </html>
