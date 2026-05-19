@@ -5,7 +5,7 @@ from django.conf import settings
 from pathlib import Path
 
 
-class PoliceStatsScraper:
+class PoliceStatScraper:
     BASE_URL = "https://statystyka.policja.pl"
     REPORTS_URL = f"{BASE_URL}/st/ruch-drogowy/76562,wypadki-drogowe-raporty-roczne.html"
 
@@ -72,7 +72,7 @@ def main():
     year_from, year_to = 2010, 2025
     save_dir = Path(__file__).parent.parent / "media" / "police-reports"
 
-    scraper = PoliceStatsScraper()
+    scraper = PoliceStatScraper()
 
     print(f"[INFO] Fetching PDF URLs for years {year_from}–{year_to}...")
     pdf_list = scraper.get_pdf_urls(year_from, year_to)
