@@ -14,7 +14,6 @@ class PoliceStatScraper:
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         })
-        settings.configure()
 
     def get_page(self, url: str) -> BeautifulSoup:
         response = self.session.get(url, timeout=10)
@@ -68,9 +67,8 @@ class PoliceStatScraper:
         return download_results
 
 
-def main():
+def main(save_dir):
     year_from, year_to = 2010, 2025
-    save_dir = Path(__file__).parent.parent / "media" / "police-reports"
 
     scraper = PoliceStatScraper()
 
@@ -84,6 +82,5 @@ def main():
     downloaded = sum(1 for r in results if r["downloaded"])
     skipped = len(results) - downloaded
     print(f"[DONE] Downloaded: {downloaded}, skipped: {skipped}.")
-
-
-main()
+#
+# main()

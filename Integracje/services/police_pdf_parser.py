@@ -100,6 +100,3 @@ def main():
 
     print(f"[DONE] Total records: {len(all_records)}")
     print(all_records[:3])
-
-
-main()

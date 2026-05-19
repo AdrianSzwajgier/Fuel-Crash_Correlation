@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Wypadki drogowe a ceny paliw</h1>
+    <button onclick="syncDatabase()">🔄 Sync with database</button>
+    <p id="sync-status"></p>
+
+    <script>
+    async function syncDatabase() {
+        document.getElementById("sync-status").textContent = "Synchronizacja...";
+        const response = await fetch("/sync/", {
+            method: "POST",
+            headers: {"X-CSRFToken": "{{ csrf_token }}"}
+        });
+        const data = await response.json();
+        document.getElementById("sync-status").textContent =
+            `Gotowe! Dodano: ${data.created}, pominięto: ${data.skipped}`;
+    }
+    </script>
+</body>
+</html>
