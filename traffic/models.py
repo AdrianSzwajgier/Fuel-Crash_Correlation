@@ -17,3 +17,15 @@ class AccidentRecord(models.Model):
 
     def __str__(self):
         return f"{self.year}-{self.month:02d}"
+
+
+class FuelPrice(models.Model):
+    date = models.DateField(unique=True)
+    diesel_price = models.DecimalField(max_digits=5, decimal_places=2)
+    petrol_price = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        ordering = ["date"]
+
+    def __str__(self):
+        return f"{self.date} ON:{self.diesel_price} E95:{self.petrol_price}"
