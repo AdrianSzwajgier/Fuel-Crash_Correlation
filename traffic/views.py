@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 
 from Integracje.services.fuel_price_scraper import FuelPriceScraper
-from Integracje.services.police_stat_scraper import main
+from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
 from traffic.models import AccidentRecord, FuelPrice
@@ -21,8 +21,22 @@ def sync_database(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
 
+    year_from, year_to = 2010, 2025
     save_dir = Path(settings.MEDIA_ROOT) / "police-reports"
-    main(save_dir)
+
+    scraper = PoliceStatScraper()
+
+    print(f"[INFO] Fetching PDF URLs for years {year_from}–{year_to}...")
+    pdf_list = scraper.get_pdf_urls(year_from, year_to)
+    print(f"[INFO] Found {len(pdf_list)} reports.")
+
+    print("[INFO] Starting download...")
+    results = scraper.download_pdfs(pdf_list, save_dir)
+
+    downloaded = sum(1 for r in results if r["downloaded"])
+    skipped = len(results) - downloaded
+    print(f"[DONE] Downloaded: {downloaded}, skipped: {skipped}.")
+
     pdf_files = list(save_dir.glob("*.pdf"))
     print(pdf_files, "###")
 
