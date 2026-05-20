@@ -75,3 +75,63 @@ async function loadChart() {
         }
     });
 }
+
+const MONTH_NAMES = [
+    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+];
+
+const monthlyCharts = {};
+
+async function loadMonthlyCharts() {
+    const response = await fetch("/chart-data/by-month/");
+    const json = await response.json();
+
+    for (let month = 1; month <= 12; month++) {
+        const entries = json.data[month] || [];
+        const labels  = entries.map(r => r.year);
+        const accidents = entries.map(r => r.accidents_total);
+        const diesel    = entries.map(r => r.avg_diesel);
+
+        const ctx = document.getElementById(`monthChart${month}`).getContext("2d");
+
+        if (monthlyCharts[month] instanceof Chart) {
+            monthlyCharts[month].destroy();
+        }
+
+        monthlyCharts[month] = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Wypadki",
+                        data: accidents,
+                        borderColor: "rgb(255, 99, 132)",
+                        yAxisID: "y",
+                        tension: 0.3,
+                    },
+                    {
+                        label: "Śr. cena ON (zł)",
+                        data: diesel,
+                        borderColor: "rgb(54, 162, 235)",
+                        yAxisID: "y2",
+                        tension: 0.3,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: "top" },
+                    title: { display: true, text: MONTH_NAMES[month - 1] },
+                },
+                interaction: { mode: "index", intersect: false },
+                scales: {
+                    y:  { position: "left",  title: { display: true, text: "Wypadki" } },
+                    y2: { position: "right", title: { display: true, text: "Cena ON (zł)" }, grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+}

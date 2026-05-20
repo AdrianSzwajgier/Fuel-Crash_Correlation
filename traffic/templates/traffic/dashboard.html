@@ -29,9 +29,18 @@
         `Gotowe! Wypadki — dodano: ${data.accidents.created}, pominięto: ${data.accidents.skipped} | ` +
         `Paliwa — dodano: ${data.fuel.created}, pominięto: ${data.fuel.skipped}`;
         loadChart();
+        loadMonthlyCharts();
     }
 
     loadChart();
+    loadMonthlyCharts();
     </script>
+
+    <h2>Wypadki według miesięcy</h2>
+    <div id="monthly-charts">
+        {% for i in "123456789012" %}
+        <canvas id="monthChart{{ forloop.counter }}"></canvas>
+        {% endfor %}
+    </div>
 </body>
 </html>
