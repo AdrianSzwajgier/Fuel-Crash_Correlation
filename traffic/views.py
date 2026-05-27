@@ -8,12 +8,20 @@ from django.db.models import Avg
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 from django.shortcuts import render
+from scipy import stats
 
 from Integracje.services.fuel_price_scraper import FuelPriceScraper
 from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
 from traffic.models import AccidentRecord, FuelPrice
+
+
+MONTH_NAMES_PL = {
+    1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień",
+    5: "Maj", 6: "Czerwiec", 7: "Lipiec", 8: "Sierpień",
+    9: "Wrzesień", 10: "Październik", 11: "Listopad", 12: "Grudzień"
+}
 
 
 # @login_required
@@ -148,3 +156,60 @@ def chart_data_by_month(request):
         })
 
     return JsonResponse({"data": by_month})
+
+
+def correlation_data(request):
+    accidents = AccidentRecord.objects.order_by("year", "month").values(
+        "year", "month", "accidents_total"
+    )
+    if not accidents:
+        return JsonResponse({"data": []})
+
+    first = accidents.first()
+    last = accidents.last()
+    date_from = datetime(first["year"], first["month"], 1).date()
+    date_to = datetime(last["year"], last["month"], 1).date()
+
+    fuel_by_month = (
+        FuelPrice.objects
+        .filter(date__gte=date_from, date__lte=date_to)
+        .annotate(month_start=TruncMonth("date"))
+        .values("month_start")
+        .annotate(avg_diesel=Avg("diesel_price"))
+        .order_by("month_start")
+    )
+    fuel_map = {
+        entry["month_start"].strftime("%Y-%m"): float(entry["avg_diesel"])
+        for entry in fuel_by_month
+    }
+
+    results = []
+    for month in range(1, 13):
+        month_accidents = [
+            r for r in accidents if r["month"] == month
+        ]
+
+        paired = [
+            (r["accidents_total"], fuel_map[f"{r['year']}-{month:02d}"])
+            for r in month_accidents
+            if f"{r['year']}-{month:02d}" in fuel_map
+        ]
+
+        if len(paired) < 3:  # za mało danych żeby liczyć korelację
+            continue
+
+        accident_vals = [p[0] for p in paired]
+        fuel_vals     = [p[1] for p in paired]
+
+        r, p_value = stats.pearsonr(accident_vals, fuel_vals)
+
+        results.append({
+            "month": month,
+            "month_name": MONTH_NAMES_PL[month],
+            "correlation": round(r, 3),
+            "p_value": round(p_value, 4),
+            "n": len(paired),
+            "significant": str(p_value < 0.05),
+        })
+
+    return JsonResponse({"data": results})
