@@ -19,6 +19,7 @@ from Integracje.services.fuel_price_scraper import FuelPriceScraper
 from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
+from Integracje.services.inflation_api import InflationAPIGUS
 from traffic.models import AccidentRecord, FuelPrice
 
 MONTH_NAMES_PL = {
@@ -225,6 +226,31 @@ def correlation_data(request):
         })
 
     return JsonResponse({"data": results})
+
+
+def inflation_data(request):
+    # np. /gus/inflation/?start=2024&end=2025
+    try:
+        start = int(request.GET.get('start', 2024))
+        end = int(request.GET.get('end', 2024))
+    except ValueError:
+        start = 2024
+        end = 2024
+
+    if start > end:
+        start, end = end, start
+
+    # OCHRONA PRZED TIMEOUTEM: Blokujemy zapytania większe niż 2 lata
+    if end - start > 2:
+        return JsonResponse({
+            "error": "Zbyt duży zakres lat. Maksymalny dozwolony zakres dla pobierania danych na żywo to 2 lata."
+        }, status=400)
+
+    service = InflationAPIGUS()
+    results = service.fetch_inflation_data(start_year=start, end_year=end)
+
+    return JsonResponse({"data": results}, json_dumps_params={'ensure_ascii': False})
+
 
 def register(request):
     if request.method == 'POST':
