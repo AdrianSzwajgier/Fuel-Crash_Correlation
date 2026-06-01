@@ -1,7 +1,6 @@
 async function loadChart() {
     const response = await fetch("/chart-data/");
     const json = await response.json();
-
     const labels        = json.data.map(r => r.label);
     const accidents     = json.data.map(r => r.accidents_total);
     const avgDiesel     = json.data.map(r => r.avg_diesel);
@@ -89,9 +88,10 @@ async function loadMonthlyCharts() {
 
     for (let month = 1; month <= 12; month++) {
         const entries = json.data[month] || [];
-        const labels  = entries.map(r => r.year);
-        const accidents = entries.map(r => r.accidents_total);
-        const diesel    = entries.map(r => r.avg_diesel);
+        const labels        = entries.map(r => r.year);
+        const accidents     = entries.map(r => r.accidents_total);
+        const diesel        = entries.map(r => r.avg_diesel);
+        const avgPetrol     = entries.map(r => r.avg_petrol);
 
         const ctx = document.getElementById(`monthChart${month}`).getContext("2d");
 
@@ -115,6 +115,13 @@ async function loadMonthlyCharts() {
                         label: "Śr. cena ON (zł)",
                         data: diesel,
                         borderColor: "rgb(54, 162, 235)",
+                        yAxisID: "y2",
+                        tension: 0.3,
+                    },
+                    {
+                        label: "Śr. cena E95 (zł)",
+                        data: avgPetrol,
+                        borderColor: "rgb(75, 192, 192)",
                         yAxisID: "y2",
                         tension: 0.3,
                     }

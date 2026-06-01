@@ -156,22 +156,26 @@ def chart_data_by_month(request):
         .filter(date__gte=date_from, date__lte=date_to)
         .annotate(month_start=TruncMonth("date"))
         .values("month_start")
-        .annotate(avg_diesel=Avg("diesel_price"))
+        .annotate(avg_diesel=Avg("diesel_price"), avg_petrol=Avg("petrol_price"))
         .order_by("month_start")
     )
     fuel_map = {
-        entry["month_start"].strftime("%Y-%m"): round(float(entry["avg_diesel"]), 2)
+        entry["month_start"].strftime("%Y-%m"): {
+            "avg_diesel": round(float(entry["avg_diesel"]), 2),
+            "avg_petrol": round(float(entry["avg_petrol"]), 2),
+        }
         for entry in fuel_by_month
     }
 
-    # grupuj po miesiącu
     by_month = {m: [] for m in range(1, 13)}
     for r in accidents:
         label = f"{r['year']}-{r['month']:02d}"
+        fuel = fuel_map.get(label, {})
         by_month[r["month"]].append({
             "year": r["year"],
             "accidents_total": r["accidents_total"],
-            "avg_diesel": fuel_map.get(label),
+            "avg_diesel": fuel.get("avg_diesel"),
+            "avg_petrol": fuel.get("avg_petrol"),
         })
 
     return JsonResponse({"data": by_month})
