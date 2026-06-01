@@ -146,22 +146,87 @@
                         method: "POST",
                         headers: {"X-CSRFToken": "{{ csrf_token }}"}
                     });
+                    if (!response.ok) throw new Error("Błąd synchronizacji bazy głównej.");
                     const data = await response.json();
 
-                    sync_inflation(2013, 2015);
+                    sync_inflation(2010, 2025);
 
                     statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
-                        <i class="bi bi-check-circle-fill me-2 fs-4 text-success"></i>
-                        <div>
-                            <strong class="d-block mb-1">Gotowe! Dane zostały zaktualizowane pomyślnie.</strong>
-                            <span class="small text-muted d-block">
-                                <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>, pominięto: ${data.accidents.skipped}
-                                <span class="mx-2 text-black-50">|</span>
-                                <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>, pominięto: ${data.fuel.skipped}
-                            </span>
-                        </div>
-                    `;
+                <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
+                <div>Główne dane zapisane. Pobieranie wskaźników inflacji z API GUS...</div>
+            `;
+
+                    let inflationStatus = "success";
+                    let inflationMessage = "";
+                    let inflationCount = 0;
+
+                    try {
+                        const infResponse = await fetch("/gus/inflation/?start=2013&end=2015");
+
+                        if (infResponse.status === 429) {
+                            const errData = await infResponse.json();
+                            inflationStatus = "limit_reached";
+                            inflationMessage = errData.error;
+                            inflationCount = errData.data_so_far ? errData.data_so_far.length : 0;
+                        } else if (!infResponse.ok) {
+                            const errData = await infResponse.json().catch(() => ({}));
+                            throw new Error(errData.error || "Błąd serwera podczas pobierania inflacji.");
+                        } else {
+                            const infData = await infResponse.json();
+                            inflationCount = infData.data ? infData.data.length : 0;
+                        }
+                    } catch (infError) {
+                        inflationStatus = "error";
+                        inflationMessage = infError.message || "Nie udało się połączyć z API GUS.";
+                    }
+
+                    if (inflationStatus === "success") {
+                        statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
+                        statusAlert.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-2 fs-4 text-success"></i>
+                    <div>
+                        <strong class="d-block mb-1">Gotowe! Dane zostały zaktualizowane pomyślnie.</strong>
+                        <span class="small text-muted d-block">
+                            <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>, pominięto: ${data.accidents.skipped}
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>, pominięto: ${data.fuel.skipped}
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-dark me-1">Inflacja (GUS)</span> dodano rekordów: <strong>${inflationCount}</strong>
+                        </span>
+                    </div>
+                `;
+                    } else if (inflationStatus === "limit_reached") {
+                        statusAlert.className = "alert alert-warning mb-0 d-flex align-items-center shadow-sm";
+                        statusAlert.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4 text-warning"></i>
+                    <div>
+                        <strong class="d-block mb-1">Częściowy sukces. Osiągnięto limit API GUS (spróbuj ponownie za 15 minut).</strong>
+                        <span class="small text-muted d-block mb-2">
+                            <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-warning text-dark me-1">Inflacja</span> Dodano wpisów: <strong>${inflationCount}</strong>
+                        </span>
+                        <div class="small text-dark fw-semibold"><i class="bi bi-info-circle me-1"></i> ${inflationMessage} Kliknij przycisk ponownie za chwilę.</div>
+                    </div>
+                `;
+                    } else {
+                        statusAlert.className = "alert alert-warning mb-0 d-flex align-items-center shadow-sm";
+                        statusAlert.innerHTML = `
+                    <i class="bi bi-exclamation-circle-fill me-2 fs-4 text-warning"></i>
+                    <div>
+                        <strong class="d-block mb-1">Zaktualizowano dane główne, ale wystąpił błąd inflacji.</strong>
+                        <span class="small text-muted d-block mb-2">
+                            <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>
+                        </span>
+                        <div class="small text-danger font-monospace">Powód: ${inflationMessage}</div>
+                    </div>
+                `;
+                    }
 
                     await loadChart();
                     await loadMonthlyCharts();

@@ -251,7 +251,7 @@ def correlation_data(request):
 
 
 def inflation_data(request):
-    # np. /gus/inflation/?start=2024&end=2025
+    # np. /gus/inflation/?start=2020&end=2026
     try:
         start = int(request.GET.get('start', 2024))
         end = int(request.GET.get('end', 2024))
@@ -262,25 +262,57 @@ def inflation_data(request):
     if start > end:
         start, end = end, start
 
-    # OCHRONA PRZED TIMEOUTEM: Blokujemy zapytania większe niż 2 lata
-    if end - start > 2:
-        return JsonResponse({
-            "error": "Zbyt duży zakres lat. Maksymalny dozwolony zakres dla pobierania danych na żywo to 2 lata."
-        }, status=400)
+    # Zaczynamy od miejsca, w którym skończyliśmy:
+    session_next_year = request.session.get('inflation_sync_next_year')
+    if session_next_year and start <= session_next_year <= end:
+        current_year = session_next_year
+    else:
+        current_year = start
 
     service = InflationAPIGUS()
-    results = service.fetch_inflation_data(start_year=start, end_year=end)
+    all_results = []
+    limit_reached = False
 
-    # Zapis do bazy danych:
-    for item in results:
-        Inflation.objects.update_or_create(
-            year=item['year'],
-            month=item['month'],
-            defaults={'value': item['value']}
-        )
-        print(f"[INFO] Added inflation data: year - {item['year']}, month - {item['month']}, value: {item['value']}")
+    # KROK 2: Pobieramy dane rok po roku w pętli
+    while current_year <= end:
+        try:
+            print(f"[INFO] Try fetching inflation data for year: {current_year}")
+            results = service.fetch_inflation_data(start_year=current_year, end_year=current_year)
 
-    return JsonResponse({"data": results}, json_dumps_params={'ensure_ascii': False})
+            for item in results:
+                Inflation.objects.update_or_create(
+                    year=item['year'],
+                    month=item['month'],
+                    defaults={'value': item['value']}
+                )
+                print(
+                    f"[INFO] Added inflation data: year - {item['year']}, month - {item['month']}, value: {item['value']}")
+
+            all_results.extend(results)
+
+            current_year += 1
+            request.session['inflation_sync_next_year'] = current_year
+
+        except Exception as e:
+            print(f"[WARNING] Request limit reached or error {current_year}: {str(e)}")
+            limit_reached = True
+            break
+
+    if limit_reached:
+        return JsonResponse({
+            "status": "limit_reached",
+            "error": f"Osiągnięto tymczasowy limit API GUS na roku {current_year}. "
+                     f"Dane do roku {current_year - 1} zostały pomyślnie zapisane.",
+            "data_so_far": all_results
+        }, status=429)  # Status 429 - Too Many Requests
+
+    if 'inflation_sync_next_year' in request.session:
+        del request.session['inflation_sync_next_year']
+
+    return JsonResponse({
+        "status": "success",
+        "data": all_results
+    }, json_dumps_params={'ensure_ascii': False})
 
 
 def register(request):
