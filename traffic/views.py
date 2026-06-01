@@ -1,4 +1,5 @@
 import json
+import math
 import re
 from datetime import datetime, date
 from decimal import Decimal
@@ -206,6 +207,9 @@ def chart_data_by_month(request):
 
 
 def correlation_data(request):
+    use_real_prices = request.GET.get("real", "false").lower() == "true"
+    cumulative_index = InflationService.get_cumulative_index() if use_real_prices else {}
+
     accidents = AccidentRecord.objects.order_by("year", "month").values(
         "year", "month", "accidents_total"
     )
@@ -236,11 +240,18 @@ def correlation_data(request):
             r for r in accidents if r["month"] == month
         ]
 
-        paired = [
-            (r["accidents_total"], fuel_map[f"{r['year']}-{month:02d}"])
-            for r in month_accidents
-            if f"{r['year']}-{month:02d}" in fuel_map
-        ]
+        paired = []
+        for r in month_accidents:
+            label = f"{r['year']}-{month:02d}"
+
+            if label in fuel_map:
+                diesel_price = fuel_map[label]
+
+                if use_real_prices and cumulative_index:
+                    diesel_price = InflationService.deflate_price(diesel_price, label, cumulative_index)
+
+                if diesel_price is not None:
+                    paired.append((r["accidents_total"], diesel_price))
 
         if len(paired) < 3:  # za mało danych, żeby liczyć korelację
             continue
@@ -248,15 +259,19 @@ def correlation_data(request):
         accident_vals = [p[0] for p in paired]
         fuel_vals = [p[1] for p in paired]
 
+        # Teraz stats.pearsonr dostanie skorygowane wartości cen paliw!
         r, p_value = stats.pearsonr(accident_vals, fuel_vals)
+
+        r_rounded = round(r, 3) if not math.isnan(r) else None
+        p_rounded = round(p_value, 4) if not math.isnan(p_value) else None
 
         results.append({
             "month": month,
             "month_name": MONTH_NAMES_PL[month],
-            "correlation": round(r, 3),
-            "p_value": round(p_value, 4),
+            "correlation": r_rounded,
+            "p_value": p_rounded,
             "n": len(paired),
-            "significant": str(p_value < 0.05),
+            "significant": str(p_rounded < 0.05 if p_rounded is not None else False),
         })
 
     return JsonResponse({"data": results})

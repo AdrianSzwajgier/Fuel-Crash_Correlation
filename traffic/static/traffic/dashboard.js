@@ -146,8 +146,18 @@ async function loadMonthlyCharts() {
 }
 
 async function loadCorrelationTable() {
-    const response = await fetch("/correlation/");
+    const useReal = document.getElementById("realPricesToggle")?.checked ? "true" : "false";
+    const isRealChecked = document.querySelector(".real-prices-toggle")?.checked || false;
+    const response = await fetch(`/correlation/?real=${useReal}`);
     const json = await response.json();
+
+    const cth = document.getElementById("corr-table-header");
+
+    if (isRealChecked) {
+        cth.innerHTML = "Korelacja: cena paliwa vs liczba wypadków (uwzględnia inflację)"
+    } else {
+        cth.innerHTML = "Korelacja: cena paliwa vs liczba wypadków"
+    }
 
     const tbody = document.getElementById("correlation-body");
     tbody.innerHTML = "";
