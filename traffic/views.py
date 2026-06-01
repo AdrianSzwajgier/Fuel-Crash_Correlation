@@ -1,9 +1,11 @@
 import json
 import re
 from datetime import datetime, date
+from decimal import Decimal
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, tostring
 from xml.dom.minidom import parseString
+from xml.etree.ElementTree import fromstring
 
 from django.conf import settings
 from django.contrib import messages
@@ -12,6 +14,7 @@ from django import forms as django_forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Avg
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse, HttpResponse
@@ -393,13 +396,6 @@ def export_xml(request):
     return response
 
 
-import json
-from decimal import Decimal
-from xml.etree.ElementTree import fromstring
-from django.db import transaction
-from traffic.models import AccidentRecord, FuelPrice, Inflation
-
-
 def import_json(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
@@ -426,7 +422,6 @@ def import_xml(request):
     except (KeyError, Exception) as e:
         return JsonResponse({"error": f"Invalid XML file: {e}"}, status=400)
 
-    # sprowadź XML do tego samego formatu co JSON payload
     payload = {
         "accident_records": [
             {k: v for k, v in record.attrib.items()}
@@ -499,3 +494,14 @@ def _import_payload(payload: dict) -> dict:
         "fuel":       {"created": fuel_created,        "skipped": fuel_skipped},
         "inflation":  {"created": inflation_created,   "skipped": inflation_skipped},
     }
+
+
+def clear_database(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    AccidentRecord.objects.all().delete()
+    FuelPrice.objects.all().delete()
+    Inflation.objects.all().delete()
+
+    return JsonResponse({"status": "ok"})

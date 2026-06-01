@@ -17,4 +17,7 @@ urlpatterns = [
     path("about", views.about, name='about'),
     path("export/json/", views.export_json, name="export_json"),
     path("export/xml/",  views.export_xml,  name="export_xml"),
+    path("import/json/", views.import_json, name="import_json"),
+    path("import/xml/",  views.import_xml,  name="import_xml"),
+    path("clear/", views.clear_database, name="clear_database"),
 ]
