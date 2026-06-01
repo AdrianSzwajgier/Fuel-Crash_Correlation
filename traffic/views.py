@@ -152,6 +152,9 @@ def chart_data(request):
 
 
 def chart_data_by_month(request):
+    use_real_prices = request.GET.get("real", "false").lower() == "true"
+    cumulative_index = InflationService.get_cumulative_index() if use_real_prices else {}
+
     accidents = AccidentRecord.objects.order_by("year", "month").values(
         "year", "month", "accidents_total"
     )
@@ -183,11 +186,20 @@ def chart_data_by_month(request):
     for r in accidents:
         label = f"{r['year']}-{r['month']:02d}"
         fuel = fuel_map.get(label, {})
+
+        diesel = fuel.get("avg_diesel")
+        petrol = fuel.get("avg_petrol")
+
+        if use_real_prices and cumulative_index:
+            diesel = InflationService.deflate_price(diesel, label, cumulative_index) if diesel else None
+            petrol = InflationService.deflate_price(petrol, label, cumulative_index) if petrol else None
+
+
         by_month[r["month"]].append({
             "year": r["year"],
             "accidents_total": r["accidents_total"],
-            "avg_diesel": fuel.get("avg_diesel"),
-            "avg_petrol": fuel.get("avg_petrol"),
+            "avg_diesel": diesel,
+            "avg_petrol": petrol,
         })
 
     return JsonResponse({"data": by_month})
