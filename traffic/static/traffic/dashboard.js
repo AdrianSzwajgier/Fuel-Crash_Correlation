@@ -135,3 +135,31 @@ async function loadMonthlyCharts() {
         });
     }
 }
+
+async function loadCorrelationTable() {
+    const response = await fetch("/correlation/");
+    const json = await response.json();
+
+    const tbody = document.getElementById("correlation-body");
+    tbody.innerHTML = "";
+
+    for (const row of json.data) {
+        const significant = row.significant === true || row.significant === "True";
+        const r = row.correlation;
+
+        let bgColor = "#f0f0f0";
+        if (significant && r < 0) bgColor = "#d4edda";
+        if (significant && r > 0) bgColor = "#f8d7da";
+
+        const tr = document.createElement("tr");
+        tr.style.backgroundColor = bgColor;
+        tr.innerHTML = `
+            <td style="padding: 8px; border: 1px solid #ddd;">${row.month_name}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${r.toFixed(3)}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.p_value.toFixed(4)}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.n}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${significant ? "yes" : "no"}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
