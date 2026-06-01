@@ -72,7 +72,8 @@
         </div>
 
         <div class="form-check form-switch mb-3">
-            <input class="form-check-input real-prices-toggle" type="checkbox" id="realPricesToggle" onchange="loadChart();loadMonthlyCharts();loadCorrelationTable()">
+            <input class="form-check-input real-prices-toggle" type="checkbox" id="realPricesToggle"
+                   onchange="loadChart();loadMonthlyCharts();loadCorrelationTable()">
             <label class="form-check-label" for="realPricesToggle">
                 Ceny realne (z uwzględnieniem inflacji)
             </label>
@@ -147,11 +148,12 @@
                 statusContainer.classList.remove("d-none");
                 statusAlert.className = "alert alert-info mb-0 d-flex align-items-center shadow-sm";
                 statusAlert.innerHTML = `
-                    <i class="bi bi-info-circle-fill me-2 fs-5 text-primary"></i>
-                    <div>Trwa synchronizacja danych z serwerem. Proszę czekać...</div>
-                `;
+            <i class="bi bi-info-circle-fill me-2 fs-5 text-primary"></i>
+            <div>Trwa synchronizacja danych z serwerem. Proszę czekać...</div>
+        `;
 
                 try {
+                    // 1. Synchronizacja wypadków i paliw
                     const response = await fetch("/sync/", {
                         method: "POST",
                         headers: {"X-CSRFToken": "{{ csrf_token }}"}
@@ -159,9 +161,8 @@
                     if (!response.ok) throw new Error("Błąd synchronizacji bazy głównej.");
                     const data = await response.json();
 
-                    sync_inflation(2010, 2025);
-
-                    statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
+                    // Zmiana komunikatu przed pobraniem inflacji
+                    statusAlert.className = "alert alert-info mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
                 <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
                 <div>Główne dane zapisane. Pobieranie wskaźników inflacji z API GUS...</div>
@@ -172,7 +173,8 @@
                     let inflationCount = 0;
 
                     try {
-                        const infResponse = await fetch("/gus/inflation/?start=2013&end=2015");
+                        // TUTAJ: Jedno, czyste zapytanie o pełny zakres lat! Usunięto dubel z góry.
+                        const infResponse = await fetch("/gus/inflation/?start=2010&end=2025");
 
                         if (infResponse.status === 429) {
                             const errData = await infResponse.json();
@@ -191,6 +193,7 @@
                         inflationMessage = infError.message || "Nie udało się połączyć z API GUS.";
                     }
 
+                    // Wyświetlanie końcowego alertu
                     if (inflationStatus === "success") {
                         statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
                         statusAlert.innerHTML = `
@@ -202,7 +205,7 @@
                             <span class="mx-2 text-black-50">|</span>
                             <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>, pominięto: ${data.fuel.skipped}
                             <span class="mx-2 text-black-50">|</span>
-                            <span class="badge bg-dark me-1">Inflacja (GUS)</span> dodano rekordów: <strong>${inflationCount}</strong>
+                            <span class="badge bg-dark me-1">Inflacja (GUS)</span> pobrano rekordów w tej serii: <strong>${inflationCount}</strong>
                         </span>
                     </div>
                 `;
@@ -211,15 +214,15 @@
                         statusAlert.innerHTML = `
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-4 text-warning"></i>
                     <div>
-                        <strong class="d-block mb-1">Częściowy sukces. Osiągnięto limit API GUS (spróbuj ponownie za 15 minut).</strong>
+                        <strong class="d-block mb-1">Częściowy sukces. Osiągnięto limit API GUS.</strong>
                         <span class="small text-muted d-block mb-2">
                             <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>
                             <span class="mx-2 text-black-50">|</span>
                             <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>
                             <span class="mx-2 text-black-50">|</span>
-                            <span class="badge bg-warning text-dark me-1">Inflacja</span> Dodano wpisów: <strong>${inflationCount}</strong>
+                            <span class="badge bg-warning text-dark me-1">Inflacja</span> ugrano wpisów przed limitem: <strong>${inflationCount}</strong>
                         </span>
-                        <div class="small text-dark fw-semibold"><i class="bi bi-info-circle me-1"></i> ${inflationMessage} Kliknij przycisk ponownie za chwilę.</div>
+                        <div class="small text-dark fw-semibold"><i class="bi bi-info-circle me-1"></i> ${inflationMessage} Kliknij przycisk ponownie za chwilę, aby kontynuować.</div>
                     </div>
                 `;
                     } else {
@@ -243,19 +246,17 @@
                     await loadCorrelationTable();
 
                 } catch (error) {
-                    console.log(error);
+                    console.error(error);
                     statusAlert.className = "alert alert-danger mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
-                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>
-                        <div><strong>Błąd!</strong> Nie udało się połączyć z bazą danych lub przetworzyć żądania.</div>
-                    `;
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>
+                <div><strong>Błąd!</strong> Nie udało się połączyć z bazą danych lub przetworzyć żądania głównego.</div>
+            `;
                 } finally {
                     btn.disabled = false;
                     icon.style.display = "inline-block";
                     spinner.style.display = "none";
                 }
-
-
             }
 
             function importData(format) {
