@@ -11,6 +11,12 @@
     {% if user.is_authenticated %}
 
         {# ── NAVBAR DROPDOWNS ── #}
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="realPricesToggle" onchange="loadChart()">
+            <label class="form-check-label" for="realPricesToggle">
+                Ceny realne (z uwzględnieniem inflacji)
+            </label>
+        </div>
         <div class="d-flex justify-content-end gap-2 mb-3">
             <div class="dropdown">
                 <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
@@ -142,7 +148,7 @@
                     });
                     const data = await response.json();
 
-                    sync_inflation();
+                    sync_inflation(2013, 2015);
 
                     statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
