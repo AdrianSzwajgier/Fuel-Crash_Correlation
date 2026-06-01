@@ -84,7 +84,8 @@ const MONTH_NAMES = [
 const monthlyCharts = {};
 
 async function loadMonthlyCharts() {
-    const response = await fetch("/chart-data/by-month/");
+    const useReal = document.getElementById("realPricesToggle")?.checked ? "true" : "false";
+    const response = await fetch(`/chart-data/by-month/?real=${useReal}`);
     const json = await response.json();
 
     for (let month = 1; month <= 12; month++) {
