@@ -2,10 +2,10 @@ async function loadChart() {
     const response = await fetch("/chart-data/");
     const json = await response.json();
 
-    const labels        = json.data.map(r => r.label);
-    const accidents     = json.data.map(r => r.accidents_total);
-    const avgDiesel     = json.data.map(r => r.avg_diesel);
-    const avgPetrol     = json.data.map(r => r.avg_petrol);
+    const labels = json.data.map(r => r.label);
+    const accidents = json.data.map(r => r.accidents_total);
+    const avgDiesel = json.data.map(r => r.avg_diesel);
+    const avgPetrol = json.data.map(r => r.avg_petrol);
 
     const ctx = document.getElementById("accidentsChart").getContext("2d");
 
@@ -52,24 +52,24 @@ async function loadChart() {
                 intersect: false,
             },
             plugins: {
-                legend: { position: "top" },
+                legend: {position: "top"},
             },
             scales: {
                 x: {
-                    ticks: { maxTicksLimit: 24 }
+                    ticks: {maxTicksLimit: 24}
                 },
                 y: {
                     type: "linear",
                     position: "left",
-                    title: { display: true, text: "Liczba wypadków" },
+                    title: {display: true, text: "Liczba wypadków"},
                     beginAtZero: false,
                 },
                 y2: {
                     type: "linear",
                     position: "right",
-                    title: { display: true, text: "Cena paliwa (zł)" },
+                    title: {display: true, text: "Cena paliwa (zł)"},
                     beginAtZero: false,
-                    grid: { drawOnChartArea: false },
+                    grid: {drawOnChartArea: false},
                 }
             }
         }
@@ -89,9 +89,9 @@ async function loadMonthlyCharts() {
 
     for (let month = 1; month <= 12; month++) {
         const entries = json.data[month] || [];
-        const labels  = entries.map(r => r.year);
+        const labels = entries.map(r => r.year);
         const accidents = entries.map(r => r.accidents_total);
-        const diesel    = entries.map(r => r.avg_diesel);
+        const diesel = entries.map(r => r.avg_diesel);
 
         const ctx = document.getElementById(`monthChart${month}`).getContext("2d");
 
@@ -123,13 +123,17 @@ async function loadMonthlyCharts() {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { position: "top" },
-                    title: { display: true, text: MONTH_NAMES[month - 1] },
+                    legend: {position: "top"},
+                    title: {display: true, text: MONTH_NAMES[month - 1]},
                 },
-                interaction: { mode: "index", intersect: false },
+                interaction: {mode: "index", intersect: false},
                 scales: {
-                    y:  { position: "left",  title: { display: true, text: "Wypadki" } },
-                    y2: { position: "right", title: { display: true, text: "Cena ON (zł)" }, grid: { drawOnChartArea: false } }
+                    y: {position: "left", title: {display: true, text: "Wypadki"}},
+                    y2: {
+                        position: "right",
+                        title: {display: true, text: "Cena ON (zł)"},
+                        grid: {drawOnChartArea: false}
+                    }
                 }
             }
         });
@@ -162,4 +166,24 @@ async function loadCorrelationTable() {
         `;
         tbody.appendChild(tr);
     }
+}
+
+function sync_inflation(startYear, endYear) {
+    const url = `/gus/inflation/?start=${startYear}&end=${endYear}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Wystąpił nieoczekiwany błąd serwera.');
+                });
+            }
+            return response.json();
+        })
+        .then(jsonData => {
+            console.log("Zapisano pomyślnie:", jsonData.data);
+        })
+        .catch(error => {
+            console.error("Błąd synchronizacji:", error.message);
+        });
 }
