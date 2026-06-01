@@ -170,3 +170,23 @@ async function loadCorrelationTable() {
         tbody.appendChild(tr);
     }
 }
+
+function sync_inflation(startYear, endYear) {
+    const url = `/gus/inflation/?start=${startYear}&end=${endYear}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || 'Wystąpił nieoczekiwany błąd serwera.');
+                });
+            }
+            return response.json();
+        })
+        .then(jsonData => {
+            console.log("Zapisano pomyślnie:", jsonData.data);
+        })
+        .catch(error => {
+            console.error("Błąd synchronizacji:", error.message);
+        });
+}

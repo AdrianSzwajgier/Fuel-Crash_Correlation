@@ -259,6 +259,14 @@ def inflation_data(request):
     service = InflationAPIGUS()
     results = service.fetch_inflation_data(start_year=start, end_year=end)
 
+    # Zapis do bazy danych:
+    for item in results:
+        Inflation.objects.update_or_create(
+            year=item['year'],
+            month=item['month'],
+            defaults={'value': item['value']}
+        )
+
     return JsonResponse({"data": results}, json_dumps_params={'ensure_ascii': False})
 
 
@@ -365,33 +373,33 @@ def export_xml(request):
     accidents_el = SubElement(root, "accident_records")
     for r in AccidentRecord.objects.all():
         SubElement(accidents_el, "record",
-            year=str(r.year),
-            month=str(r.month),
-            accidents_total=str(r.accidents_total),
-            accidents_pct=str(r.accidents_pct),
-            fatalities_total=str(r.fatalities_total),
-            fatalities_pct=str(r.fatalities_pct),
-            injured_total=str(r.injured_total),
-            injured_pct=str(r.injured_pct),
-        )
+                   year=str(r.year),
+                   month=str(r.month),
+                   accidents_total=str(r.accidents_total),
+                   accidents_pct=str(r.accidents_pct),
+                   fatalities_total=str(r.fatalities_total),
+                   fatalities_pct=str(r.fatalities_pct),
+                   injured_total=str(r.injured_total),
+                   injured_pct=str(r.injured_pct),
+                   )
 
     # FuelPrice
     fuel_el = SubElement(root, "fuel_prices")
     for r in FuelPrice.objects.all():
         SubElement(fuel_el, "record",
-            date=str(r.date),
-            diesel_price=str(r.diesel_price),
-            petrol_price=str(r.petrol_price),
-        )
+                   date=str(r.date),
+                   diesel_price=str(r.diesel_price),
+                   petrol_price=str(r.petrol_price),
+                   )
 
     # Inflation
     inflation_el = SubElement(root, "inflation")
     for r in Inflation.objects.all():
         SubElement(inflation_el, "record",
-            year=str(r.year),
-            month=str(r.month),
-            value=str(r.value),
-        )
+                   year=str(r.year),
+                   month=str(r.month),
+                   value=str(r.value),
+                   )
 
     pretty_xml = parseString(tostring(root, encoding="unicode")).toprettyxml(indent="  ")
 
@@ -460,16 +468,18 @@ def _import_payload(payload: dict) -> dict:
             year=int(r["year"]),
             month=int(r["month"]),
             defaults={
-                "accidents_total":  int(r["accidents_total"]),
-                "accidents_pct":    float(r["accidents_pct"]),
+                "accidents_total": int(r["accidents_total"]),
+                "accidents_pct": float(r["accidents_pct"]),
                 "fatalities_total": int(r["fatalities_total"]),
-                "fatalities_pct":   float(r["fatalities_pct"]),
-                "injured_total":    int(r["injured_total"]),
-                "injured_pct":      float(r["injured_pct"]),
+                "fatalities_pct": float(r["fatalities_pct"]),
+                "injured_total": int(r["injured_total"]),
+                "injured_pct": float(r["injured_pct"]),
             }
         )
-        if created: accidents_created += 1
-        else:       accidents_skipped += 1
+        if created:
+            accidents_created += 1
+        else:
+            accidents_skipped += 1
 
     for r in payload.get("fuel_prices", []):
         _, created = FuelPrice.objects.get_or_create(
@@ -479,8 +489,10 @@ def _import_payload(payload: dict) -> dict:
                 "petrol_price": Decimal(r["petrol_price"]),
             }
         )
-        if created: fuel_created += 1
-        else:       fuel_skipped += 1
+        if created:
+            fuel_created += 1
+        else:
+            fuel_skipped += 1
 
     for r in payload.get("inflation", []):
         _, created = Inflation.objects.get_or_create(
@@ -488,15 +500,17 @@ def _import_payload(payload: dict) -> dict:
             month=int(r["month"]),
             defaults={"value": float(r["value"])}
         )
-        if created: inflation_created += 1
-        else:       inflation_skipped += 1
+        if created:
+            inflation_created += 1
+        else:
+            inflation_skipped += 1
 
     return {
         "created": accidents_created + fuel_created + inflation_created,
         "skipped": accidents_skipped + fuel_skipped + inflation_skipped,
-        "accidents":  {"created": accidents_created,  "skipped": accidents_skipped},
-        "fuel":       {"created": fuel_created,        "skipped": fuel_skipped},
-        "inflation":  {"created": inflation_created,   "skipped": inflation_skipped},
+        "accidents": {"created": accidents_created, "skipped": accidents_skipped},
+        "fuel": {"created": fuel_created, "skipped": fuel_skipped},
+        "inflation": {"created": inflation_created, "skipped": inflation_skipped},
     }
 
 

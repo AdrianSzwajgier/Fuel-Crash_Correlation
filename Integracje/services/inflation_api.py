@@ -13,18 +13,18 @@ class InflationAPIGUS:
     ID_PRZEKROJ = "736"
 
     MONTHS_MAPPING = {
-        "Styczeń": 247,
-        "Luty": 248,
-        "Marzec": 249,
-        "Kwiecień": 250,
-        "Maj": 251,
-        "Czerwiec": 252,
-        "Lipiec": 253,
-        "Sierpień": 254,
-        "Wrzesień": 255,
-        "Październik": 256,
-        "Listopad": 257,
-        "Grudzień": 258,
+        1: 247,
+        2: 248,
+        3: 249,
+        4: 250,
+        5: 251,
+        6: 252,
+        7: 253,
+        8: 254,
+        9: 255,
+        10: 256,
+        11: 257,
+        12: 258,
     }
 
     def fetch_inflation_data(self, start_year=2010, end_year=2025):

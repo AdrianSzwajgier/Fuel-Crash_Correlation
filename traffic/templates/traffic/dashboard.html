@@ -142,6 +142,8 @@
                     });
                     const data = await response.json();
 
+                    sync_inflation();
+
                     statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
                         <i class="bi bi-check-circle-fill me-2 fs-4 text-success"></i>
@@ -170,6 +172,8 @@
                     icon.style.display = "inline-block";
                     spinner.style.display = "none";
                 }
+
+
             }
 
             function importData(format) {
