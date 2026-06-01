@@ -69,6 +69,8 @@ async function loadChart() {
                     position: "right",
                     title: { display: true, text: "Cena paliwa (zł)" },
                     beginAtZero: false,
+                    min: 3.5,
+                    max: 9.5,
                     grid: { drawOnChartArea: false },
                 }
             }
@@ -175,7 +177,7 @@ async function loadCorrelationTable() {
 function sync_inflation(startYear, endYear) {
     const url = `/gus/inflation/?start=${startYear}&end=${endYear}`;
 
-    fetch(url)
+return fetch(url)
         .then(response => {
             if (!response.ok) {
                 return response.json().then(err => {
@@ -186,8 +188,10 @@ function sync_inflation(startYear, endYear) {
         })
         .then(jsonData => {
             console.log("Zapisano pomyślnie:", jsonData.data);
+            return jsonData.data; // DODAJEMY RETURN TUTAJ, aby przekazać dane dalej
         })
         .catch(error => {
             console.error("Błąd synchronizacji:", error.message);
+            throw error; // Rzucamy błąd dalej, żeby blok główny wiedział, że coś poszło nie tak
         });
 }
