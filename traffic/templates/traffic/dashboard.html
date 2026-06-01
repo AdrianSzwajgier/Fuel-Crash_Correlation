@@ -11,12 +11,6 @@
     {% if user.is_authenticated %}
 
         {# ── NAVBAR DROPDOWNS ── #}
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="realPricesToggle" onchange="loadChart()">
-            <label class="form-check-label" for="realPricesToggle">
-                Ceny realne (z uwzględnieniem inflacji)
-            </label>
-        </div>
         <div class="d-flex justify-content-end gap-2 mb-3">
             <div class="dropdown">
                 <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
@@ -75,6 +69,13 @@
             <div id="sync-status-container" class="card-footer bg-transparent border-0 pt-0 d-none">
                 <div id="sync-status" class="alert mb-0 d-flex align-items-center shadow-sm" role="alert"></div>
             </div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="realPricesToggle" onchange="loadChart()">
+            <label class="form-check-label" for="realPricesToggle">
+                Ceny realne (z uwzględnieniem inflacji)
+            </label>
         </div>
 
         <div class="card mb-5 shadow-sm">
@@ -233,6 +234,7 @@
                     await loadCorrelationTable();
 
                 } catch (error) {
+                    console.log(error);
                     statusAlert.className = "alert alert-danger mb-0 d-flex align-items-center shadow-sm";
                     statusAlert.innerHTML = `
                         <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>

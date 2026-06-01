@@ -2,10 +2,10 @@ async function loadChart() {
     const useReal = document.getElementById("realPricesToggle")?.checked ? "true" : "false";
     const response = await fetch(`/chart-data/?real=${useReal}`);
     const json = await response.json();
-    const labels = json.data.map(r => r.label);
-    const accidents = json.data.map(r => r.accidents_total);
-    const avgDiesel = json.data.map(r => r.avg_diesel);
-    const avgPetrol = json.data.map(r => r.avg_petrol);
+    const labels        = json.data.map(r => r.label);
+    const accidents     = json.data.map(r => r.accidents_total);
+    const avgDiesel     = json.data.map(r => r.avg_diesel);
+    const avgPetrol     = json.data.map(r => r.avg_petrol);
 
     const ctx = document.getElementById("accidentsChart").getContext("2d");
 
@@ -52,24 +52,24 @@ async function loadChart() {
                 intersect: false,
             },
             plugins: {
-                legend: {position: "top"},
+                legend: { position: "top" },
             },
             scales: {
                 x: {
-                    ticks: {maxTicksLimit: 24}
+                    ticks: { maxTicksLimit: 24 }
                 },
                 y: {
                     type: "linear",
                     position: "left",
-                    title: {display: true, text: "Liczba wypadków"},
+                    title: { display: true, text: "Liczba wypadków" },
                     beginAtZero: false,
                 },
                 y2: {
                     type: "linear",
                     position: "right",
-                    title: {display: true, text: "Cena paliwa (zł)"},
+                    title: { display: true, text: "Cena paliwa (zł)" },
                     beginAtZero: false,
-                    grid: {drawOnChartArea: false},
+                    grid: { drawOnChartArea: false },
                 }
             }
         }
@@ -89,10 +89,10 @@ async function loadMonthlyCharts() {
 
     for (let month = 1; month <= 12; month++) {
         const entries = json.data[month] || [];
-        const labels = entries.map(r => r.year);
-        const accidents = entries.map(r => r.accidents_total);
-        const diesel = entries.map(r => r.avg_diesel);
-        const avgPetrol = entries.map(r => r.avg_petrol);
+        const labels        = entries.map(r => r.year);
+        const accidents     = entries.map(r => r.accidents_total);
+        const diesel        = entries.map(r => r.avg_diesel);
+        const avgPetrol     = entries.map(r => r.avg_petrol);
 
         const ctx = document.getElementById(`monthChart${month}`).getContext("2d");
 
@@ -131,17 +131,13 @@ async function loadMonthlyCharts() {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {position: "top"},
-                    title: {display: true, text: MONTH_NAMES[month - 1]},
+                    legend: { position: "top" },
+                    title: { display: true, text: MONTH_NAMES[month - 1] },
                 },
-                interaction: {mode: "index", intersect: false},
+                interaction: { mode: "index", intersect: false },
                 scales: {
-                    y: {position: "left", title: {display: true, text: "Wypadki"}},
-                    y2: {
-                        position: "right",
-                        title: {display: true, text: "Cena ON (zł)"},
-                        grid: {drawOnChartArea: false}
-                    }
+                    y:  { position: "left",  title: { display: true, text: "Wypadki" } },
+                    y2: { position: "right", title: { display: true, text: "Cena ON (zł)" }, grid: { drawOnChartArea: false } }
                 }
             }
         });
@@ -200,6 +196,8 @@ function sync_inflation(startYear, endYear) {
         })
         .then(jsonData => {
             console.log("All data saved successfully:", jsonData.data);
+            console.log("Zapisano pomyślnie:", jsonData.data);
+            return jsonData.data; // DODAJEMY RETURN TUTAJ, aby przekazać dane dalej
         })
         .catch(error => {
             if (error.isLimit) {
@@ -208,5 +206,7 @@ function sync_inflation(startYear, endYear) {
             } else {
                 console.error("Synchronize error:", error.message);
             }
+            console.error("Błąd synchronizacji:", error.message);
+            throw error; // Rzucamy błąd dalej, żeby blok główny wiedział, że coś poszło nie tak
         });
 }
