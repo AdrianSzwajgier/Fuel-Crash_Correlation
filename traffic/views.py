@@ -22,6 +22,7 @@ from django.shortcuts import render, redirect
 from scipy import stats
 
 from Integracje.services.fuel_price_scraper import FuelPriceScraper
+from Integracje.services.inflation_service import InflationService
 from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
@@ -95,6 +96,9 @@ def about(request):
 
 
 def chart_data(request):
+    use_real_prices = request.GET.get("real", "false").lower() == "true"
+    cumulative_index = InflationService.get_cumulative_index() if use_real_prices else {}
+
     # zakres dat z tabeli wypadków
     accidents = AccidentRecord.objects.order_by("year", "month").values(
         "year", "month", "accidents_total"
@@ -129,11 +133,19 @@ def chart_data(request):
     for r in accidents:
         label = f"{r['year']}-{r['month']:02d}"
         fuel = fuel_map.get(label, {})
+
+        diesel = fuel.get("diesel")
+        petrol = fuel.get("petrol")
+
+        if use_real_prices and cumulative_index:
+            diesel = InflationService.deflate_price(diesel, label, cumulative_index) if diesel else None
+            petrol = InflationService.deflate_price(petrol, label, cumulative_index) if petrol else None
+
         data.append({
             "label": label,
             "accidents_total": r["accidents_total"],
-            "avg_diesel": fuel.get("diesel"),
-            "avg_petrol": fuel.get("petrol"),
+            "avg_diesel": diesel,
+            "avg_petrol": petrol,
         })
 
     return JsonResponse({"data": data})

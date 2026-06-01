@@ -1,5 +1,6 @@
 async function loadChart() {
-    const response = await fetch("/chart-data/");
+    const useReal = document.getElementById("realPricesToggle")?.checked ? "true" : "false";
+    const response = await fetch(`/chart-data/?real=${useReal}`);
     const json = await response.json();
     const labels        = json.data.map(r => r.label);
     const accidents     = json.data.map(r => r.accidents_total);
