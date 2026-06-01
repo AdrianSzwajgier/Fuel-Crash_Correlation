@@ -1,18 +1,21 @@
+import json
 import re
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
+from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.dom.minidom import parseString
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, forms, update_session_auth_hash, logout
+from django.contrib.auth import login, update_session_auth_hash, logout
 from django import forms as django_forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.db.models import Avg
 from django.db.models.functions import TruncMonth
-from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
 from scipy import stats
 
 from Integracje.services.fuel_price_scraper import FuelPriceScraper
@@ -20,7 +23,7 @@ from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
 from Integracje.services.inflation_api import InflationAPIGUS
-from traffic.models import AccidentRecord, FuelPrice
+from traffic.models import AccidentRecord, FuelPrice, Inflation
 
 MONTH_NAMES_PL = {
     1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień",
@@ -316,3 +319,183 @@ def log_out(request):
     if request.method == 'POST':
         logout(request)
     return redirect('dashboard')
+
+
+def export_json(request):
+    accident_records = list(AccidentRecord.objects.values(
+        "year", "month", "accidents_total", "accidents_pct",
+        "fatalities_total", "fatalities_pct", "injured_total", "injured_pct"
+    ))
+    fuel_prices = [
+        {
+            "date": str(r["date"]),
+            "diesel_price": str(r["diesel_price"]),
+            "petrol_price": str(r["petrol_price"]),
+        }
+        for r in FuelPrice.objects.values("date", "diesel_price", "petrol_price")
+    ]
+    inflation = list(Inflation.objects.values("year", "month", "value"))
+
+    payload = {
+        "exported_at": str(date.today()),
+        "accident_records": accident_records,
+        "fuel_prices": fuel_prices,
+        "inflation": inflation,
+    }
+
+    response = HttpResponse(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        content_type="application/json; charset=utf-8",
+    )
+    response["Content-Disposition"] = 'attachment; filename="export.json"'
+    return response
+
+
+def export_xml(request):
+    root = Element("export", exported_at=str(date.today()))
+
+    # AccidentRecord
+    accidents_el = SubElement(root, "accident_records")
+    for r in AccidentRecord.objects.all():
+        SubElement(accidents_el, "record",
+            year=str(r.year),
+            month=str(r.month),
+            accidents_total=str(r.accidents_total),
+            accidents_pct=str(r.accidents_pct),
+            fatalities_total=str(r.fatalities_total),
+            fatalities_pct=str(r.fatalities_pct),
+            injured_total=str(r.injured_total),
+            injured_pct=str(r.injured_pct),
+        )
+
+    # FuelPrice
+    fuel_el = SubElement(root, "fuel_prices")
+    for r in FuelPrice.objects.all():
+        SubElement(fuel_el, "record",
+            date=str(r.date),
+            diesel_price=str(r.diesel_price),
+            petrol_price=str(r.petrol_price),
+        )
+
+    # Inflation
+    inflation_el = SubElement(root, "inflation")
+    for r in Inflation.objects.all():
+        SubElement(inflation_el, "record",
+            year=str(r.year),
+            month=str(r.month),
+            value=str(r.value),
+        )
+
+    pretty_xml = parseString(tostring(root, encoding="unicode")).toprettyxml(indent="  ")
+
+    response = HttpResponse(pretty_xml, content_type="application/xml; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="export.xml"'
+    return response
+
+
+import json
+from decimal import Decimal
+from xml.etree.ElementTree import fromstring
+from django.db import transaction
+from traffic.models import AccidentRecord, FuelPrice, Inflation
+
+
+def import_json(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    try:
+        payload = json.loads(request.FILES["file"].read().decode("utf-8"))
+    except (KeyError, json.JSONDecodeError) as e:
+        return JsonResponse({"error": f"Invalid JSON file: {e}"}, status=400)
+
+    try:
+        result = _import_payload(payload)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"status": "ok", **result})
+
+
+def import_xml(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    try:
+        root = fromstring(request.FILES["file"].read().decode("utf-8"))
+    except (KeyError, Exception) as e:
+        return JsonResponse({"error": f"Invalid XML file: {e}"}, status=400)
+
+    # sprowadź XML do tego samego formatu co JSON payload
+    payload = {
+        "accident_records": [
+            {k: v for k, v in record.attrib.items()}
+            for record in root.findall("accident_records/record")
+        ],
+        "fuel_prices": [
+            {k: v for k, v in record.attrib.items()}
+            for record in root.findall("fuel_prices/record")
+        ],
+        "inflation": [
+            {k: v for k, v in record.attrib.items()}
+            for record in root.findall("inflation/record")
+        ],
+    }
+
+    try:
+        result = _import_payload(payload)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"status": "ok", **result})
+
+
+@transaction.atomic
+def _import_payload(payload: dict) -> dict:
+    accidents_created = accidents_skipped = 0
+    fuel_created = fuel_skipped = 0
+    inflation_created = inflation_skipped = 0
+
+    for r in payload.get("accident_records", []):
+        _, created = AccidentRecord.objects.get_or_create(
+            year=int(r["year"]),
+            month=int(r["month"]),
+            defaults={
+                "accidents_total":  int(r["accidents_total"]),
+                "accidents_pct":    float(r["accidents_pct"]),
+                "fatalities_total": int(r["fatalities_total"]),
+                "fatalities_pct":   float(r["fatalities_pct"]),
+                "injured_total":    int(r["injured_total"]),
+                "injured_pct":      float(r["injured_pct"]),
+            }
+        )
+        if created: accidents_created += 1
+        else:       accidents_skipped += 1
+
+    for r in payload.get("fuel_prices", []):
+        _, created = FuelPrice.objects.get_or_create(
+            date=r["date"],
+            defaults={
+                "diesel_price": Decimal(r["diesel_price"]),
+                "petrol_price": Decimal(r["petrol_price"]),
+            }
+        )
+        if created: fuel_created += 1
+        else:       fuel_skipped += 1
+
+    for r in payload.get("inflation", []):
+        _, created = Inflation.objects.get_or_create(
+            year=int(r["year"]),
+            month=int(r["month"]),
+            defaults={"value": float(r["value"])}
+        )
+        if created: inflation_created += 1
+        else:       inflation_skipped += 1
+
+    return {
+        "created": accidents_created + fuel_created + inflation_created,
+        "skipped": accidents_skipped + fuel_skipped + inflation_skipped,
+        "accidents":  {"created": accidents_created,  "skipped": accidents_skipped},
+        "fuel":       {"created": fuel_created,        "skipped": fuel_skipped},
+        "inflation":  {"created": inflation_created,   "skipped": inflation_skipped},
+    }
