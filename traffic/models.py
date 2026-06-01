@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class AccidentRecord(models.Model):
     year = models.IntegerField()
     month = models.IntegerField()  # 1-12
@@ -29,3 +30,16 @@ class FuelPrice(models.Model):
 
     def __str__(self):
         return f"{self.date} ON:{self.diesel_price} E95:{self.petrol_price}"
+
+
+class Inflation(models.Model):
+    year = models.IntegerField()
+    month = models.IntegerField()
+    value = models.FloatField()
+
+    class Meta:
+        unique_together = ("year", "month")
+        ordering = ["year", "month"]
+
+    def __str__(self):
+        return f"Year:{self.year}, month:{self.month:02d}, value:{self.value}"

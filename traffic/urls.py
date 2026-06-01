@@ -8,7 +8,7 @@ urlpatterns = [
     path("chart-data/by-month/", views.chart_data_by_month, name="chart_data_by_month"),
     path("correlation/", views.correlation_data, name="correlation_data"),
 
-    path("/gus/inflation/", views.inflation_data, name="inflation"),
+    path("gus/inflation/", views.inflation_data, name="inflation"),
 
     path("register", views.register, name='register'),
 
