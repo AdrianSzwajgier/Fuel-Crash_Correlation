@@ -17,8 +17,11 @@
         </div>
     </div>
 
+    <!-- Zmiana klas na col-lg-4 dla idealnego ułożenia 3 kart w jednym rzędzie -->
     <div class="row g-4">
-        <div class="col-lg-6">
+
+        <!-- KARTA 1: Statystyki wypadków -->
+        <div class="col-lg-4 col-md-6">
             <div class="card h-100 shadow-sm border-0 bg-white">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
@@ -45,7 +48,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-3 small">
                             <span class="text-secondary fw-semibold">Format danych:</span>
-                            <span class="text-muted">Raporty roczne (PDF / Dane zagregowane)</span>
+                            <span class="text-muted">Raporty roczne (PDF / Dane)</span>
                         </div>
 
                         <a href="https://statystyka.policja.pl/st/ruch-drogowy/76562,Wypadki-drogowe-raporty-roczne.html"
@@ -59,7 +62,8 @@
             </div>
         </div>
 
-        <div class="col-lg-6">
+        <!-- KARTA 2: Ceny paliw -->
+        <div class="col-lg-4 col-md-6">
             <div class="card h-100 shadow-sm border-0 bg-white">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
@@ -97,6 +101,48 @@
             </div>
         </div>
 
+        <!-- KARTA 3: Wskaźniki inflacji -->
+        <div class="col-lg-4 col-md-12">
+            <div class="card h-100 shadow-sm border-0 bg-white">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; min-width: 50px;">
+                            <i class="bi bi-percent text-dark fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Wskaźniki inflacji (CPI)</h5>
+                            <span class="badge bg-secondary px-2 py-1 rounded-pill small mt-1">Dane makroekonomiczne</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small flex-grow-1">
+                        Oficjalne, miesięczne wskaźniki cen towarów i usług konsumpcyjnych w Polsce. Dane pozwalają na
+                        analizę tła ekonomicznego i korektę cen paliw względem inflacji.
+                    </p>
+
+                    <div class="border-top pt-3 mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Dostawca:</span>
+                            <span class="text-dark fw-bold">Główny Urząd Statystyczny (GUS)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Format danych:</span>
+                            <span class="text-muted">API REST (Dziedzinowe Bazy Wiedzy)</span>
+                        </div>
+
+                        <a href="https://api.stat.gov.pl/Home/DBWApi"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-outline-dark btn-sm w-100 fw-semibold py-2">
+                            <i class="bi bi-box-arrow-up-right me-2"></i> Przejdź do API GUS DBW
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEKCJA: Metodologia i transformacja -->
         <div class="col-12 mt-4">
             <div class="card shadow-sm border-0 bg-white">
                 <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
