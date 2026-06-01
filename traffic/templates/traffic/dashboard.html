@@ -191,6 +191,71 @@
         </script>
 
     {% else %}
-        {# ... reszta bloku {% else %} bez zmian ... #}
+        <div class="row justify-content-center py-5">
+            <div class="col-md-10 col-lg-8 text-center">
+
+                <!-- Ikona przewodnia w idealnym kółku -->
+                <div class="bg-light rounded-circle mb-4 d-flex align-items-center justify-content-center mx-auto"
+                     style="width: 80px; height: 80px;">
+                    <i class="bi bi-graph-up-arrow text-dark fs-2"></i>
+                </div>
+
+                <!-- Główny nagłówek projektu -->
+                <h1 class="fw-bold display-6 mb-3">Wypadki drogowe a ceny paliw</h1>
+                <p class="text-muted lead mx-auto mb-5" style="max-width: 650px;">
+                    Czy dynamika rynku naftowego wpływa na bezpieczeństwo na drogach?
+                </p>
+
+                <!-- Karta z krótką zapowiedzią funkcji systemu -->
+                <div class="card shadow-sm border-0 bg-white p-4 mb-5 text-start">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3 text-dark">
+                            <i class="bi bi-lightning-charge me-2"></i>Platforma Fuel-Crash Correlation oferuje:
+                        </h5>
+                        <div class="row g-4 small text-muted">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-dark me-2 mt-1"></i>
+                                    <div>
+                                        <strong class="text-dark">Wykresy</strong><br>
+                                        Wizualizacja zmian cen benzyny i oleju napędowego nałożona bezpośrednio na statystyki
+                                        wypadków drogowych z podziałem na miesiące.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-dark me-2 mt-1"></i>
+                                    <div>
+                                        <strong class="text-dark">Integracja w czasie rzeczywistym</strong><br>
+                                        Dostęp do modułów synchronizacji danych rynkowych oraz najnowszych rejestrów
+                                        wypadków.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Call to Action (Zaloguj się) -->
+                <div class="bg-light p-4 rounded-3 border border-opacity-10 shadow-sm">
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-secondary">
+                        <i class="bi bi-lock-fill"></i>
+                        <h5 class="fw-bold mb-0">Zawartość zablokowana</h5>
+                    </div>
+                    <p class="text-muted small mb-4">Aby uzyskać dostęp do wykresów, musisz się zalogować.</p>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'login' %}" class="btn btn-dark px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Zaloguj się
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline-dark px-4 py-2 fw-semibold shadow-sm">
+                            Utwórz konto
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
