@@ -494,3 +494,14 @@ def _import_payload(payload: dict) -> dict:
         "fuel":       {"created": fuel_created,        "skipped": fuel_skipped},
         "inflation":  {"created": inflation_created,   "skipped": inflation_skipped},
     }
+
+
+def clear_database(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+
+    AccidentRecord.objects.all().delete()
+    FuelPrice.objects.all().delete()
+    Inflation.objects.all().delete()
+
+    return JsonResponse({"status": "ok"})
