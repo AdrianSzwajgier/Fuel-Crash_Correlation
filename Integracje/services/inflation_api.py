@@ -57,6 +57,7 @@ class InflationAPIGUS:
                             "value": value,
                         }
                     )
+                    print(f"[INFO] Fetched inflation data: year - {year}, month - {month_name}, value: {value}")
 
                 except requests.RequestException as e:
                     print(f"Błąd pobierania danych o inflacji z API GUS dla {year} - {month_name}: {e}")

@@ -278,6 +278,7 @@ def inflation_data(request):
             month=item['month'],
             defaults={'value': item['value']}
         )
+        print(f"[INFO] Added inflation data: year - {item['year']}, month - {item['month']}, value: {item['value']}")
 
     return JsonResponse({"data": results}, json_dumps_params={'ensure_ascii': False})
 
