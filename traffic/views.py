@@ -3,11 +3,16 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import login, forms, update_session_auth_hash, logout
+from django import forms as django_forms
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.models import User
 from django.db.models import Avg
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from scipy import stats
 
 from Integracje.services.fuel_price_scraper import FuelPriceScraper
@@ -15,7 +20,6 @@ from Integracje.services.police_stat_scraper import PoliceStatScraper
 from Integracje.services.police_pdf_parser import PolicePDFParser
 from Integracje.services.sync_database import SyncDatabase
 from traffic.models import AccidentRecord, FuelPrice
-
 
 MONTH_NAMES_PL = {
     1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień",
@@ -73,6 +77,14 @@ def sync_database(request):
 
 def dashboard(request):
     return render(request, "traffic/dashboard.html")
+
+
+def used_data(request):
+    return render(request, 'web/used_data.html')
+
+
+def about(request):
+    return render(request, 'web/about.html')
 
 
 def chart_data(request):
@@ -199,7 +211,7 @@ def correlation_data(request):
             continue
 
         accident_vals = [p[0] for p in paired]
-        fuel_vals     = [p[1] for p in paired]
+        fuel_vals = [p[1] for p in paired]
 
         r, p_value = stats.pearsonr(accident_vals, fuel_vals)
 
@@ -213,3 +225,68 @@ def correlation_data(request):
         })
 
     return JsonResponse({"data": results})
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Automatyczne logowanie po rejestracji:
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+
+@login_required(login_url='login')
+def profile(request):
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=request.user, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Twój profil został pomyślnie zaktualizowany!")
+            return redirect('profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+
+    return render(request, 'user/profile.html', {'form': form})
+
+
+class ProfileUpdateForm(django_forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        # Sprawdzamy, czy login istnieje u KOGOŚ INNEGO niż zalogowany użytkownik
+        if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
+            raise django_forms.ValidationError("Użytkownik o takim loginie już istnieje.")
+        return username
+
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Utrzymuje sesję zalogowanego użytkownika po zmianie hasła
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Twoje hasło zostało pomyślnie zmienione!')
+            return redirect('profile')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'user/passwd_change.html', {'form': form})
+
+
+def log_out(request):
+    if request.method == 'POST':
+        logout(request)
+    return redirect('dashboard')

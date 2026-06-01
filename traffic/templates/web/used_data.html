@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Użyte dane i źródła{% endblock %}
+
+{% block content %}
+    <div class="pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Użyte dane i źródła</h1>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <p class="text-muted lead">
+                Analiza i wizualizacja korelacji pomiędzy bezpieczeństwem na drogach a rynkiem paliwowym opiera się na
+                zweryfikowanych, oficjalnych zbiorach danych. Poniżej znajduje się zestawienie wszystkich źródeł
+                wykorzystywanych przez system.
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0 bg-white">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; min-width: 50px;">
+                            <i class="bi bi-exclamation-triangle text-dark fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Statystyki wypadków drogowych</h5>
+                            <span class="badge bg-dark px-2 py-1 rounded-pill small mt-1">Główne źródło</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small flex-grow-1">
+                        Oficjalne, roczne raporty dotyczące bezpieczeństwa ruchu drogowego w Polsce. Dane obejmują
+                        szczegółowe statystyki dotyczące liczby wypadków, kolizji, osób rannych oraz ofiar śmiertelnych
+                        z podziałem na miesiące, województwa oraz warunki atmosferyczne.
+                    </p>
+
+                    <div class="border-top pt-3 mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Dostawca:</span>
+                            <span class="text-dark fw-bold">Komenda Główna Policji (KGP)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Format danych:</span>
+                            <span class="text-muted">Raporty roczne (PDF / Dane zagregowane)</span>
+                        </div>
+
+                        <a href="https://statystyka.policja.pl/st/ruch-drogowy/76562,Wypadki-drogowe-raporty-roczne.html"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-outline-dark btn-sm w-100 fw-semibold py-2">
+                            <i class="bi bi-box-arrow-up-right me-2"></i> Przejdź do źródła KGP
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm border-0 bg-white">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; min-width: 50px;">
+                            <i class="bi bi-fuel-pump text-dark fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Ceny paliw płynnych</h5>
+                            <span class="badge bg-secondary px-2 py-1 rounded-pill small mt-1">Dane rynkowe</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small flex-grow-1">
+                        Zbiór danych zawierający średnie miesięczne oraz tygodniowe ceny detaliczne paliw na stacjach
+                        benzynowych w Polsce. Obejmuje notowania dla benzyny bezołowiowej (Pb95, Pb98), oleju napędowego
+                        (ON) oraz gazu płynnego (LPG).
+                    </p>
+
+                    <div class="border-top pt-3 mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Dostawca:</span>
+                            <span class="text-dark fw-bold">Główny Urząd Statystyczny / Notowania rynkowe</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 small">
+                            <span class="text-secondary fw-semibold">Format danych:</span>
+                            <span class="text-muted">Szeregi czasowe (JSON / CSV)</span>
+                        </div>
+
+                        <button class="btn btn-light border btn-sm w-100 fw-semibold py-2 text-muted" disabled>
+                            <i class="bi bi-database me-2"></i> Dane zsynchronizowane lokalnie
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-4">
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="bi bi-gear-fill me-2"></i>Metodologia i transformacja
+                        danych</h5>
+                </div>
+                <div class="card-body p-4 text-muted small">
+                    <p class="mb-2">
+                        Przed zaprezentowaniem danych na wykresach w panelu głównym (Dashboard), surowe informacje
+                        przechodzą przez proces **ETL (Extract, Transform, Load)** w celu zapewnienia ich spójności:
+                    </p>
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-1"><strong class="text-dark">Normalizacja czasowa:</strong> Statystyki dzienne
+                            wypadków są agregowane do okresów miesięcznych, aby idealnie odpowiadały interwałom
+                            raportowania cen paliw.
+                        </li>
+                        <li class="mb-1"><strong class="text-dark">Czyszczenie danych:</strong> Rekordy niepełne lub
+                            anomalie statystyczne wynikające ze zmian systemów raportowania KGP są odpowiednio
+                            filtrowane.
+                        </li>
+                        <li><strong class="text-dark">Obliczanie korelacji:</strong> System wykorzystuje algorytmy
+                            statystyczne (np. współczynnik korelacji Pearsona) do badania siły i kierunku zależności
+                            pomiędzy ceną surowców a liczbą zdarzeń drogowych.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Rejestracja{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center pt-4">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-body p-4 p-sm-5">
+
+                    <div class="text-center mb-4">
+                        <div class="bg-light rounded-circle mb-3 d-flex align-items-center justify-content-center mx-auto"
+                             style="width: 64px; height: 64px;">
+                            <i class="bi bi-person-plus text-dark fs-3"></i>
+                        </div>
+                        <h2 class="fw-bold h4 mb-1">Utwórz konto</h2>
+                        <p class="text-muted small">Zarejestruj się, aby uzyskać dostęp do aplikacji</p>
+                    </div>
+
+                    <form method="post" action="" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger shadow-sm small py-2 mb-3" role="alert">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                {% if form.non_field_errors %}
+                                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                                {% else %}
+                                    Popraw błędy w poniższym formularzu.
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label fw-semibold small text-secondary">Login</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i
+                                        class="bi bi-person"></i></span>
+                                <input type="text" name="username" id="id_username"
+                                       class="form-control border-start-0 ps-1" placeholder="Wprowadź swój login"
+                                       value="{{ form.username.value|default:'' }}" required>
+                            </div>
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password1" class="form-label fw-semibold small text-secondary">Hasło</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i
+                                        class="bi bi-lock"></i></span>
+                                <input type="password" name="password1" id="id_password1"
+                                       class="form-control border-start-0 ps-1" placeholder="Wprowadź silne hasło"
+                                       required>
+                            </div>
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.password1.errors %}{{ error }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password2" class="form-label fw-semibold small text-secondary">Powtórz
+                                hasło</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i
+                                        class="bi bi-lock-fill"></i></span>
+                                <input type="password" name="password2" id="id_password2"
+                                       class="form-control border-start-0 ps-1" placeholder="Wpisz hasło ponownie"
+                                       required>
+                            </div>
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.password2.errors %}{{ error }}{% endfor %}</div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 py-2.5 fw-semibold shadow-sm mb-2">
+                            <i class="bi bi-person-check me-2 fs-5"></i> Zarejestruj się
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4 border-top pt-3">
+                        <p class="text-muted small mb-0">Masz już konto?
+                            <a href="{% url 'login' %}"
+                               class="text-dark fw-semibold link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Zaloguj
+                                się</a>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

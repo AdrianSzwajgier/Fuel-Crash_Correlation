@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Mój profil{% endblock %}
+
+{% block content %}
+    <div class="pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Mój profil</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 bg-white text-center p-4">
+                <div class="card-body">
+                    <div class="bg-light rounded-circle mb-3 d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 90px; height: 90px;">
+                        <i class="bi bi-person-circle text-dark" style="font-size: 3.5rem;"></i>
+                    </div>
+
+                    <h3 class="fw-bold h5 mb-1">{{ user.username }}</h3>
+                    <p class="text-muted small mb-3">{{ user.email|default:"Brak adresu e-mail" }}</p>
+
+                    <span class="badge bg-dark px-3 py-2 rounded-pill font-weight-normal small">
+                        <i class="bi bi-shield-check me-1"></i> Konto aktywne
+                    </span>
+
+                    <hr class="my-4 text-muted opacity-25">
+
+                    <div class="text-start small text-muted">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Data rejestracji:</span>
+                            <span class="text-dark fw-semibold">{{ user.date_joined|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Ostatnie logowanie:</span>
+                            <span class="text-dark fw-semibold">{{ user.last_login|date:"d.m.Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0 bg-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="card-title fw-bold mb-0">Ustawienia konta</h5>
+                    <p class="text-muted small mb-0">Tutaj możesz edytować swój login oraz pozostałe dane
+                        identyfikacyjne.</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" action="" novalidate>
+                        {% csrf_token %}
+
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-success shadow-sm small py-2 mb-3" role="alert">
+                                    <i class="bi bi-check-circle-fill me-2"></i> {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_username" class="form-label fw-semibold small text-secondary">Nazwa
+                                    użytkownika (Login)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-person"></i></span>
+                                    <input type="text" name="username" id="id_username"
+                                           class="form-control border-start-0 ps-1"
+                                           value="{{ form.username.value|default:user.username }}" required>
+                                </div>
+                                {% if form.username.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.username.errors %}
+                                            <i class="bi bi-exclamation-circle me-1"></i>{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="id_email" class="form-label fw-semibold small text-secondary">Adres
+                                    e-mail</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-envelope"></i></span>
+                                    <input type="email" name="email" id="id_email"
+                                           class="form-control border-start-0 ps-1"
+                                           value="{{ form.email.value|default:user.email }}">
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_first_name"
+                                       class="form-label fw-semibold small text-secondary">Imię</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-fonts"></i></span>
+                                    <input type="text" name="first_name" id="id_first_name"
+                                           class="form-control border-start-0 ps-1"
+                                           value="{{ form.first_name.value|default:user.first_name }}"
+                                           placeholder="Nie podano">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="id_last_name"
+                                       class="form-label fw-semibold small text-secondary">Nazwisko</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-fonts"></i></span>
+                                    <input type="text" name="last_name" id="id_last_name"
+                                           class="form-control border-start-0 ps-1"
+                                           value="{{ form.last_name.value|default:user.last_name }}"
+                                           placeholder="Nie podano">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
+                            <a href="{% url 'password_change' %}"
+                               class="btn btn-outline-secondary btn-sm fw-semibold shadow-sm px-3 py-2">
+                                <i class="bi bi-key me-1"></i> Zmień hasło
+                            </a>
+
+                            <button type="submit" class="btn btn-dark btn-sm fw-semibold shadow-sm px-4 py-2">
+                                <i class="bi bi-hdd me-1"></i> Zapisz zmiany
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,46 +1,192 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     {% load static %}
+    {% if user.is_authenticated %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Wypadki drogowe a ceny paliw</h1>
+        </div>
 
-    <h1>Wypadki drogowe a ceny paliw</h1>
+        <div class="card mb-4 shadow-sm border-0 bg-light">
+            <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h5 class="card-title mb-1 fw-bold">Synchronizacja z bazą danych</h5>
+                    <p class="card-text text-muted mb-0 small">Pobierz najświeższe dane o wypadkach i cenach paliw, aby
+                        zaktualizować poniższe statystyki.</p>
+                </div>
+                <div>
+                    <button id="sync-btn" onclick="syncDatabase()"
+                            class="btn btn-outline-dark d-inline-flex align-items-center fw-semibold px-4 py-2 shadow-sm">
+                        <i id="sync-icon" class="bi bi-arrow-repeat me-2 fs-5"></i>
+                        <span id="sync-spinner" class="spinner-border spinner-border-sm me-2" role="status"
+                              aria-hidden="true" style="display: none;"></span>
+                        Synchronizuj dane
+                    </button>
+                </div>
+            </div>
+            <div id="sync-status-container" class="card-footer bg-transparent border-0 pt-0 d-none">
+                <div id="sync-status" class="alert mb-0 d-flex align-items-center shadow-sm" role="alert">
+                </div>
+            </div>
+        </div>
 
-    <button onclick="syncDatabase()">🔄 Sync with database</button>
-    <p id="sync-status"></p>
+        <div class="card mb-5 shadow-sm">
+            <div class="card-body p-4">
+                <canvas id="accidentsChart" style="max-height: 450px;"></canvas>
+            </div>
+        </div>
 
-    <canvas id="accidentsChart"></canvas>
+        <h2 class="h4 mb-4 fw-bold text-secondary border-bottom pb-2">Wypadki według miesięcy</h2>
+        <div id="monthly-charts" class="mb-5">
+            {% for i in "123456789012" %}
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="card-header bg-light fw-semibold border-bottom-0 pt-3 pb-2 text-secondary">
+                        <i class="bi bi-calendar3 me-2"></i> Miesiąc {{ forloop.counter }}
+                    </div>
+                    <div class="card-body p-3">
+                        <canvas id="monthChart{{ forloop.counter }}" style="width: 100%; max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
 
-    <script src="{% static 'traffic/dashboard.js' %}"></script>
+        <script src="{% static 'traffic/dashboard.js' %}"></script>
 
-    <script>
-    async function syncDatabase() {
-        document.getElementById("sync-status").textContent = "Synchronizacja...";
-        const response = await fetch("/sync/", {
-            method: "POST",
-            headers: {"X-CSRFToken": "{{ csrf_token }}"}
-        });
-        const data = await response.json();
-    document.getElementById("sync-status").textContent =
-        `Gotowe! Wypadki — dodano: ${data.accidents.created}, pominięto: ${data.accidents.skipped} | ` +
-        `Paliwa — dodano: ${data.fuel.created}, pominięto: ${data.fuel.skipped}`;
-        loadChart();
-        loadMonthlyCharts();
-    }
+        <script>
+            async function syncDatabase() {
+                const btn = document.getElementById("sync-btn");
+                const icon = document.getElementById("sync-icon");
+                const spinner = document.getElementById("sync-spinner");
+                const statusContainer = document.getElementById("sync-status-container");
+                const statusAlert = document.getElementById("sync-status");
 
-    loadChart();
-    loadMonthlyCharts();
-    </script>
+                // 1. Ustawienie wyglądu w stan ładowania:
+                btn.disabled = true;
+                icon.style.display = "none";
+                spinner.style.display = "inline-block";
 
-    <h2>Wypadki według miesięcy</h2>
-    <div id="monthly-charts">
-        {% for i in "123456789012" %}
-        <canvas id="monthChart{{ forloop.counter }}"></canvas>
-        {% endfor %}
-    </div>
-</body>
-</html>
+                statusContainer.classList.remove("d-none");
+                statusAlert.className = "alert alert-info mb-0 d-flex align-items-center shadow-sm";
+                statusAlert.innerHTML = `
+                <i class="bi bi-info-circle-fill me-2 fs-5 text-primary"></i>
+                <div>Trwa synchronizacja danych z serwerem. Proszę czekać...</div>
+            `;
+
+                try {
+                    const response = await fetch("/sync/", {
+                        method: "POST",
+                        headers: {"X-CSRFToken": "{{ csrf_token }}"}
+                    });
+                    const data = await response.json();
+
+                    statusAlert.className = "alert alert-success mb-0 d-flex align-items-center shadow-sm";
+                    statusAlert.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-2 fs-4 text-success"></i>
+                    <div>
+                        <strong class="d-block mb-1">Gotowe! Dane zostały zaktualizowane pomyślnie.</strong>
+                        <span class="small text-muted d-block">
+                            <span class="badge bg-dark me-1">Wypadki</span> dodano: <strong>${data.accidents.created}</strong>, pominięto: ${data.accidents.skipped}
+                            <span class="mx-2 text-black-50">|</span>
+                            <span class="badge bg-dark me-1">Ceny Paliw</span> dodano: <strong>${data.fuel.created}</strong>, pominięto: ${data.fuel.skipped}
+                        </span>
+                    </div>
+                `;
+
+                    await loadChart();
+                    await loadMonthlyCharts();
+
+                } catch (error) {
+                    statusAlert.className = "alert alert-danger mb-0 d-flex align-items-center shadow-sm";
+                    statusAlert.innerHTML = `
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>
+                    <div><strong>Błąd!</strong> Nie udało się połączyć z bazą danych lub przetworzyć żądania.</div>
+                `;
+                } finally {
+                    // 4. Przywrócenie pierwotnego stanu przycisku
+                    btn.disabled = false;
+                    icon.style.display = "inline-block";
+                    spinner.style.display = "none";
+                }
+            }
+
+            // Automatyczne ładowanie wykresów przy wejściu na stronę:
+            loadChart();
+            loadMonthlyCharts();
+        </script>
+
+    {% else %}
+        <div class="row justify-content-center py-5">
+            <div class="col-md-10 col-lg-8 text-center">
+
+                <!-- Ikona przewodnia w idealnym kółku -->
+                <div class="bg-light rounded-circle mb-4 d-flex align-items-center justify-content-center mx-auto"
+                     style="width: 80px; height: 80px;">
+                    <i class="bi bi-graph-up-arrow text-dark fs-2"></i>
+                </div>
+
+                <!-- Główny nagłówek projektu -->
+                <h1 class="fw-bold display-6 mb-3">Wypadki drogowe a ceny paliw</h1>
+                <p class="text-muted lead mx-auto mb-5" style="max-width: 650px;">
+                    Czy dynamika rynku naftowego wpływa na bezpieczeństwo na drogach?
+                </p>
+
+                <!-- Karta z krótką zapowiedzią funkcji systemu -->
+                <div class="card shadow-sm border-0 bg-white p-4 mb-5 text-start">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3 text-dark">
+                            <i class="bi bi-lightning-charge me-2"></i>Platforma Fuel-Crash Correlation oferuje:
+                        </h5>
+                        <div class="row g-4 small text-muted">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-dark me-2 mt-1"></i>
+                                    <div>
+                                        <strong class="text-dark">Wykresy</strong><br>
+                                        Wizualizacja zmian cen benzyny i oleju napędowego nałożona bezpośrednio na statystyki
+                                        wypadków drogowych z podziałem na miesiące.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-dark me-2 mt-1"></i>
+                                    <div>
+                                        <strong class="text-dark">Integracja w czasie rzeczywistym</strong><br>
+                                        Dostęp do modułów synchronizacji danych rynkowych oraz najnowszych rejestrów
+                                        wypadków.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Call to Action (Zaloguj się) -->
+                <div class="bg-light p-4 rounded-3 border border-opacity-10 shadow-sm">
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2 text-secondary">
+                        <i class="bi bi-lock-fill"></i>
+                        <h5 class="fw-bold mb-0">Zawartość zablokowana</h5>
+                    </div>
+                    <p class="text-muted small mb-4">Aby uzyskać dostęp do wykresów, musisz się zalogować.</p>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'login' %}" class="btn btn-dark px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Zaloguj się
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline-dark px-4 py-2 fw-semibold shadow-sm">
+                            Utwórz konto
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock %}
