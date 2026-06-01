@@ -13,11 +13,9 @@
 
 2. Opis projektu:
     a. Problem integracyjny: Analiza danych wypadków drogowych w kontekście cen paliw.
-    b. Hipoteza: Wzrost cen paliw powoduje ostrożniejszą jazdę i w konsekwencji mniej wypadków.
-    c. Opis problemu: Analiza danych wypadków drogowych oraz cen paliw jest trudna, ze względu na rozproszenie danych. Same dane często nie są w postaci sprzyjającej porównywanie oraz analizę. Ceny paliw są zazwyczaj tylko wyświetlane na stronie, a statystyki wypadków to obszerne pliki pdf na każdy rok. Jedynie inflację, użytą tutaj do korekty cen paliw, można uzyskać z API.
+    b. Opis problemu: Analiza danych wypadków drogowych oraz cen paliw jest trudna, ze względu na rozproszenie danych. Same dane często nie są w postaci sprzyjającej porównywanie oraz analizę. Ceny paliw są zazwyczaj tylko wyświetlane na stronie, a statystyki wypadków to obszerne pliki pdf na każdy rok. Jedynie inflację, użytą tutaj do korekty cen paliw, można uzyskać z API.
     Aczkolwiek nawet tutaj nie jest to proste, ponieważ to API jest bardzo rozbudowane, a dokumentacja mało przyjazna i zrozumiałą.
-    d. Wnioski:
-    e. Lista przykładowych pytań:
+    c. Lista przykładowych pytań:
         - Czy wzrost cen paliw wpływa na spadek liczby wypadków?
         - Jak wyglądają ceny paliw w latach 2010-2025 po uwzględnieniu inflacji a jak bez jej uwzględniania?
         - Jak bardzo inflacja wpływa na cenę paliwa?
