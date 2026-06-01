@@ -226,7 +226,6 @@ def correlation_data(request):
 
     return JsonResponse({"data": results})
 
-
 def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -254,6 +253,7 @@ def profile(request):
     return render(request, 'user/profile.html', {'form': form})
 
 
+@login_required
 class ProfileUpdateForm(django_forms.ModelForm):
     class Meta:
         model = User
@@ -277,7 +277,7 @@ def change_password(request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            # Utrzymuje sesję zalogowanego użytkownika po zmianie hasła
+            # Utrzymuje sesję zalogowanego użytkownika po zmianie hasła:
             update_session_auth_hash(request, user)
             messages.success(request, 'Twoje hasło zostało pomyślnie zmienione!')
             return redirect('profile')
