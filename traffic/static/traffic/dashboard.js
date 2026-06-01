@@ -154,11 +154,11 @@ async function loadCorrelationTable() {
         const tr = document.createElement("tr");
         tr.style.backgroundColor = bgColor;
         tr.innerHTML = `
-            <td style="padding: 8px; border: 1px solid #ddd;">${row.month_name}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.month_name}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${r.toFixed(3)}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.p_value.toFixed(4)}</td>
             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${row.n}</td>
-            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${significant ? "yes" : "no"}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${significant ? "Tak" : "Nie"}</td>
         `;
         tbody.appendChild(tr);
     }
