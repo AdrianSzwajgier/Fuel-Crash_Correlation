@@ -218,7 +218,7 @@ def correlation_data(request):
             if f"{r['year']}-{month:02d}" in fuel_map
         ]
 
-        if len(paired) < 3:  # za mało danych żeby liczyć korelację
+        if len(paired) < 3:  # za mało danych, żeby liczyć korelację
             continue
 
         accident_vals = [p[0] for p in paired]
@@ -297,7 +297,6 @@ def profile(request):
     return render(request, 'user/profile.html', {'form': form})
 
 
-@login_required
 class ProfileUpdateForm(django_forms.ModelForm):
     class Meta:
         model = User
@@ -309,7 +308,6 @@ class ProfileUpdateForm(django_forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        # Sprawdzamy, czy login istnieje u KOGOŚ INNEGO niż zalogowany użytkownik
         if User.objects.filter(username=username).exclude(pk=self.user.pk).exists():
             raise django_forms.ValidationError("Użytkownik o takim loginie już istnieje.")
         return username

@@ -1,8 +1,5 @@
-import logging
 import time
 import requests
-
-logger = logging.getLogger(__name__)
 
 
 class InflationAPIGUS:
@@ -62,9 +59,7 @@ class InflationAPIGUS:
                     )
 
                 except requests.RequestException as e:
-                    logger.error(
-                        f"Błąd pobierania danych o inflacji z API GUS dla {year} - {month_name}: {e}"
-                    )
+                    print(f"Błąd pobierania danych o inflacji z API GUS dla {year} - {month_name}: {e}")
                     results.append(
                         {"year": year, "month": month_name, "value": None}
                     )
