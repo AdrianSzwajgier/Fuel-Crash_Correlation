@@ -66,6 +66,6 @@ class InflationAPIGUS:
                     )
 
                 # Limit API GUS:
-                time.sleep(0.5)
+                time.sleep(0.2)
 
         return results
